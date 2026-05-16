@@ -163,8 +163,8 @@ SerializedSingleton* SerializedSingleton::instance = nullptr;
 std::mutex SerializedSingleton::mutex;
 
 // Example 4: Bypassing Singleton
-// Demonstrates how a singleton can be "broken" using pointer hacking
-// or other techniques.
+// In C++, the most common way to bypass a Singleton is using 'friend' classes/functions
+// or pointer manipulation (hacking private access).
 class BypasableSingleton {
 private:
     static BypasableSingleton* instance;
@@ -177,8 +177,20 @@ public:
         if (!instance) instance = new BypasableSingleton();
         return instance;
     }
+
+    // This 'friend' class can access the private constructor!
+    friend class SingletonHacker;
 };
+
 BypasableSingleton* BypasableSingleton::instance = nullptr;
+
+class SingletonHacker {
+public:
+    static BypasableSingleton* createNewInstance() {
+        // This works because SingletonHacker is a friend of BypasableSingleton
+        return new BypasableSingleton();
+    }
+};
 
 int main() {
     std::cout << "=== Singleton Pattern Demo ===" << std::endl << std::endl;
@@ -222,14 +234,15 @@ int main() {
     std::cout << "--- Bypassing Singleton Example ---" << std::endl;
     BypasableSingleton* b1 = BypasableSingleton::getInstance();
     
-    // Bypass using 'new' is impossible because constructor is private.
-    // But we can bypass using "Placement New" or Hacking with Pointers if we know the memory layout.
-    // Or simpler: Using reflection (if available) or Friend classes.
+    // Bypass using a 'friend' class
+    BypasableSingleton* b2 = SingletonHacker::createNewInstance();
+    
+    std::cout << "Same instance? " << (b1 == b2 ? "Yes" : "No (Bypass Successful!)") << std::endl;
     
     std::cout << "Ways to bypass in C++:" << std::endl;
-    std::cout << "1. Friend classes/functions can access private constructor." << std::endl;
-    std::cout << "2. Pointer hacking (casting to access private members)." << std::endl;
-    std::cout << "3. Serialization/Deserialization (manually rebuilding the object)." << std::endl;
+    std::cout << "1. Friend classes/functions (as shown above)." << std::endl;
+    std::cout << "2. Pointer hacking (casting or layout assumptions)." << std::endl;
+    std::cout << "3. Serialization (manually rebuilding state into a new object)." << std::endl;
 
     return 0;
 }

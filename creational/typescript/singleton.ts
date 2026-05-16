@@ -1,31 +1,31 @@
 /*
  * SINGLETON DESIGN PATTERN
- * 
+ *
  * WHAT IS IT?
  * The Singleton pattern ensures a class has only one instance and provides a global point of access to that instance.
- * 
+ *
  * WHY DOES IT EXIST?
  * - Some resources should only exist once (database connections, logging services, configuration managers)
  * - Prevents multiple instances from causing conflicts or inconsistent state
  * - Provides controlled access to the sole instance
- * 
+ *
  * WHEN TO USE IT?
  * - When exactly one instance of a class is needed to coordinate actions across the system
  * - When the sole instance should be extensible by subclassing, and clients should be able to use an extended instance without modifying their code
  * - Common use cases: database connection pools, logging services, configuration managers, thread pools, caches
- * 
+ *
  * PROS:
  * - Controlled access to the sole instance
  * - Reduced namespace pollution (compared to global variables)
  * - Can be subclassed
  * - Can be lazy-loaded (created only when first needed)
- * 
+ *
  * CONS:
  * - Violates Single Responsibility Principle (handles both its business logic and instance creation)
  * - Can hide dependencies (making code harder to test)
  * - Global state can lead to unexpected behavior in multi-threaded environments
  * - Difficult to unit test due to global state
- * 
+ *
  * REAL-WORLD ANALOGY:
  * Think of a government - there's only one president or prime minister at a time. Everyone who needs to interact with the head of state goes through the same single instance. You can't have two presidents simultaneously making conflicting decisions.
  */
@@ -34,13 +34,13 @@
 class DatabaseConnection {
   // Private static property to hold the single instance
   private static instance: DatabaseConnection;
-  
+
   // Private constructor to prevent instantiation from outside
   private constructor(private isConnected: boolean = false) {
     console.log('DatabaseConnection: Initializing connection...');
     this.isConnected = true;
   }
-  
+
   // Static method to get the single instance
   public static getInstance(): DatabaseConnection {
     if (!DatabaseConnection.instance) {
@@ -48,7 +48,7 @@ class DatabaseConnection {
     }
     return DatabaseConnection.instance;
   }
-  
+
   // Business logic methods
   public executeQuery(query: string): void {
     if (this.isConnected) {
@@ -57,7 +57,7 @@ class DatabaseConnection {
       console.log('Error: Not connected to database');
     }
   }
-  
+
   public getConnectionStatus(): boolean {
     return this.isConnected;
   }
@@ -67,12 +67,12 @@ class DatabaseConnection {
 class Logger {
   private static _instance: Logger;
   private logCount: number = 0;
-  
+
   // Private constructor
   private constructor() {
     console.log('Logger: Initializing logger...');
   }
-  
+
   // Static getter for lazy initialization
   public static get instance(): Logger {
     if (!Logger._instance) {
@@ -80,12 +80,12 @@ class Logger {
     }
     return Logger._instance;
   }
-  
+
   public log(message: string): void {
     this.logCount++;
     console.log(`[LOG #${this.logCount}] ${message}`);
   }
-  
+
   public getLogCount(): number {
     return this.logCount;
   }
@@ -95,13 +95,13 @@ class Logger {
 class ConfigurationManager {
   private static instance: ConfigurationManager;
   private config: Map<string, string>;
-  
+
   // Private constructor with parameters
   private constructor(initialConfig?: Map<string, string>) {
     console.log('ConfigurationManager: Initializing...');
     this.config = initialConfig || new Map();
   }
-  
+
   // Static method with optional initialization parameters
   public static getInstance(initialConfig?: Map<string, string>): ConfigurationManager {
     if (!ConfigurationManager.instance) {
@@ -109,15 +109,15 @@ class ConfigurationManager {
     }
     return ConfigurationManager.instance;
   }
-  
+
   public set(key: string, value: string): void {
     this.config.set(key, value);
   }
-  
+
   public get(key: string): string | undefined {
     return this.config.get(key);
   }
-  
+
   public displayConfig(): void {
     console.log('Current Configuration:');
     this.config.forEach((value, key) => {
@@ -129,24 +129,25 @@ class ConfigurationManager {
 // Example 4: Singleton using module pattern (TypeScript-specific)
 // This leverages TypeScript's module system to create a singleton
 const SingletonService = (() => {
-  let instance: any = null;
-  
   class Service {
     private data: string[] = [];
-    
-    private constructor() {
+
+    // Constructor is public because the class itself is private to this scope
+    constructor() {
       console.log('Service: Initializing...');
     }
-    
+
     public addData(item: string): void {
       this.data.push(item);
     }
-    
+
     public getData(): string[] {
       return [...this.data];
     }
   }
-  
+
+  let instance: Service | null = null;
+
   return {
     getInstance: (): Service => {
       if (!instance) {
@@ -158,39 +159,41 @@ const SingletonService = (() => {
 })();
 
 // Example 5: Async Thread-safe Singleton
-// In environments where multiple async calls might trigger initialization
+// In environments where multiple async calls might trigger initialization.
+// The "System Design" way in JS/TS is to use a Promise as a lock.
 class AsyncSingleton {
   private static instance: AsyncSingleton | null = null;
-  private static isInitializing = false;
+  private static initPromise: Promise<AsyncSingleton> | null = null;
 
   private constructor() {
     console.log('AsyncSingleton: Instance created');
   }
 
   public static async getInstance(): Promise<AsyncSingleton> {
+    // 1. If instance already exists, return it immediately
     if (AsyncSingleton.instance) return AsyncSingleton.instance;
 
-    // "Serialized" access using a simple flag/loop
-    while (AsyncSingleton.isInitializing) {
-      await new Promise(resolve => setTimeout(resolve, 10));
-      if (AsyncSingleton.instance) return AsyncSingleton.instance;
+    // 2. If initialization is already in progress, return the existing promise
+    if (AsyncSingleton.initPromise) {
+      console.log('AsyncSingleton: Initialization already in progress, waiting...');
+      return AsyncSingleton.initPromise;
     }
 
-    AsyncSingleton.isInitializing = true;
-    try {
-      console.log('AsyncSingleton: Starting async initialization...');
+    // 3. Start initialization and store the promise (the "Lock")
+    AsyncSingleton.initPromise = (async () => {
+      console.log('AsyncSingleton: Starting heavy async initialization...');
       await new Promise(resolve => setTimeout(resolve, 100)); // Simulate delay
       AsyncSingleton.instance = new AsyncSingleton();
-    } finally {
-      AsyncSingleton.isInitializing = false;
-    }
+      return AsyncSingleton.instance;
+    })();
 
-    return AsyncSingleton.instance;
+    return AsyncSingleton.initPromise;
   }
 }
 
 // Example 6: Bypassing Singleton
-// Demonstrates how to bypass the private constructor in JavaScript/TypeScript
+// In TypeScript, 'private' is a compile-time check. At runtime, JavaScript 
+// reflection can still access and call the constructor.
 class BypasableSingleton {
   private static instance: BypasableSingleton;
   private constructor() {
@@ -205,24 +208,24 @@ class BypasableSingleton {
 // Demo code
 function demoSingleton(): void {
   console.log('=== Singleton Pattern Demo ===\n');
-  
+
   // Example 1: Basic Singleton
   console.log('--- DatabaseConnection Example ---');
   const db1 = DatabaseConnection.getInstance();
   db1.executeQuery('SELECT * FROM users');
-  
+
   const db2 = DatabaseConnection.getInstance();
   db2.executeQuery('SELECT * FROM products');
-  
+
   console.log(`Same instance? ${db1 === db2 ? 'Yes' : 'No'}\n`);
-  
+
   // Example 2: Singleton with getter
   console.log('--- Logger Example ---');
   Logger.instance.log('Application started');
   Logger.instance.log('User logged in');
   Logger.instance.log('Processing request');
   console.log(`Total logs: ${Logger.instance.getLogCount()}\n`);
-  
+
   // Example 3: Singleton with initialization parameters
   console.log('--- ConfigurationManager Example ---');
   const initialConfig = new Map<string, string>([
@@ -231,22 +234,22 @@ function demoSingleton(): void {
   ]);
   const config = ConfigurationManager.getInstance(initialConfig);
   config.displayConfig();
-  
+
   config.set('apiKey', 'abc123');
   config.displayConfig();
-  
+
   const config2 = ConfigurationManager.getInstance();
   console.log(`Same instance? ${config === config2 ? 'Yes' : 'No'}\n`);
-  
+
   // Example 4: Module pattern singleton
   console.log('--- Module Pattern Singleton ---');
   const service1 = SingletonService.getInstance();
   service1.addData('Item 1');
   service1.addData('Item 2');
-  
+
   const service2 = SingletonService.getInstance();
   service2.addData('Item 3');
-  
+
   console.log('Service data:', service2.getData());
   console.log(`Same instance? ${service1 === service2 ? 'Yes' : 'No'}\n`);
 
@@ -263,7 +266,7 @@ function demoSingleton(): void {
   // Example 6: Bypassing Singleton
   console.log('--- Bypassing Singleton Example ---');
   const b1 = BypasableSingleton.getInstance();
-  
+
   // Bypassing using Reflect.construct (even if constructor is private)
   try {
     const b2 = Reflect.construct(BypasableSingleton, []) as BypasableSingleton;

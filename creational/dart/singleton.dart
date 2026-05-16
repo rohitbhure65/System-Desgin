@@ -161,18 +161,13 @@ class AsyncSingleton {
 }
 
 // Example 5: Bypassing Singleton
-// Even with a private constructor, Singletons can sometimes be bypassed.
+// In Dart, Singletons are scoped to the current ISOLATE. 
+// A common "bypass" is when developers expect a singleton to share state across the whole app,
+// but it fails when multiple isolates are used (e.g. background workers).
 class BypasableSingleton {
   static final BypasableSingleton _instance = BypasableSingleton._internal();
-  
   BypasableSingleton._internal();
-  
   factory BypasableSingleton() => _instance;
-  
-  // Note: In Dart, reflection via 'dart:mirrors' could bypass this, 
-  // but it's not available in Flutter/Web.
-  // A common bypass is simply creating a different class that mimics it,
-  // or if the private constructor isn't truly protected (e.g. in the same file).
 }
 
 // Demo code
@@ -226,7 +221,8 @@ void main() {
   // Example 5: Bypassing Singleton (Conceptual)
   print('--- Bypassing Singleton (Conceptual) ---');
   print('In Dart, you can bypass singletons via:');
-  print('1. Reflection (dart:mirrors) - although restricted in many environments');
-  print('2. Multiple Isolates - each isolate has its own memory and its own Singleton instance');
-  print('3. Dependency Injection - if you inject different instances for testing');
+  print('1. Multiple Isolates: Each isolate gets its own memory and its own Singleton instance.');
+  print('   (This is the most common "gotcha" in Flutter background tasks)');
+  print('2. Reflection: Using "dart:mirrors" (not available in Flutter/Web).');
+  print('3. Dependency Injection: Swapping the singleton for a mock during testing.');
 }
