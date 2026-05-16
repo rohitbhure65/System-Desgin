@@ -125,9 +125,60 @@ public:
     }
 };
 
-// Initialize static members
 std::unique_ptr<Logger> Logger::instance = nullptr;
 std::once_flag Logger::initFlag;
+
+// Example 3: Double-Checked Locking (Explicit Serialized Access)
+// This pattern was common before C++11. It uses a mutex to ensure
+// that only one thread creates the instance.
+class SerializedSingleton {
+private:
+    static SerializedSingleton* instance;
+    static std::mutex mutex;
+
+    SerializedSingleton() {
+        std::cout << "SerializedSingleton: Instance created." << std::endl;
+    }
+
+public:
+    static SerializedSingleton* getInstance() {
+        // First check (no locking for performance)
+        if (instance == nullptr) {
+            // Locking for thread safety
+            std::lock_guard<std::mutex> lock(mutex);
+            // Second check (to prevent race condition)
+            if (instance == nullptr) {
+                instance = new SerializedSingleton();
+            }
+        }
+        return instance;
+    }
+    
+    void doWork() {
+        std::cout << "SerializedSingleton is working..." << std::endl;
+    }
+};
+
+SerializedSingleton* SerializedSingleton::instance = nullptr;
+std::mutex SerializedSingleton::mutex;
+
+// Example 4: Bypassing Singleton
+// Demonstrates how a singleton can be "broken" using pointer hacking
+// or other techniques.
+class BypasableSingleton {
+private:
+    static BypasableSingleton* instance;
+    BypasableSingleton() {
+        std::cout << "BypasableSingleton: Instance created." << std::endl;
+    }
+
+public:
+    static BypasableSingleton* getInstance() {
+        if (!instance) instance = new BypasableSingleton();
+        return instance;
+    }
+};
+BypasableSingleton* BypasableSingleton::instance = nullptr;
 
 int main() {
     std::cout << "=== Singleton Pattern Demo ===" << std::endl << std::endl;
@@ -158,7 +209,27 @@ int main() {
     logger2.log("Processing request");
     
     std::cout << "Same instance? " << (&logger1 == &logger2 ? "Yes" : "No") << std::endl;
-    std::cout << "Total logs: " << logger1.getLogCount() << std::endl;
+    std::cout << "Total logs: " << logger1.getLogCount() << std::endl << std::endl;
     
+    // Using Double-Checked Locking
+    std::cout << "--- SerializedSingleton Example ---" << std::endl;
+    SerializedSingleton* s1 = SerializedSingleton::getInstance();
+    s1->doWork();
+    SerializedSingleton* s2 = SerializedSingleton::getInstance();
+    std::cout << "Same instance? " << (s1 == s2 ? "Yes" : "No") << std::endl << std::endl;
+
+    // Bypassing Singleton
+    std::cout << "--- Bypassing Singleton Example ---" << std::endl;
+    BypasableSingleton* b1 = BypasableSingleton::getInstance();
+    
+    // Bypass using 'new' is impossible because constructor is private.
+    // But we can bypass using "Placement New" or Hacking with Pointers if we know the memory layout.
+    // Or simpler: Using reflection (if available) or Friend classes.
+    
+    std::cout << "Ways to bypass in C++:" << std::endl;
+    std::cout << "1. Friend classes/functions can access private constructor." << std::endl;
+    std::cout << "2. Pointer hacking (casting to access private members)." << std::endl;
+    std::cout << "3. Serialization/Deserialization (manually rebuilding the object)." << std::endl;
+
     return 0;
 }

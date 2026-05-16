@@ -157,6 +157,51 @@ const SingletonService = (() => {
   };
 })();
 
+// Example 5: Async Thread-safe Singleton
+// In environments where multiple async calls might trigger initialization
+class AsyncSingleton {
+  private static instance: AsyncSingleton | null = null;
+  private static isInitializing = false;
+
+  private constructor() {
+    console.log('AsyncSingleton: Instance created');
+  }
+
+  public static async getInstance(): Promise<AsyncSingleton> {
+    if (AsyncSingleton.instance) return AsyncSingleton.instance;
+
+    // "Serialized" access using a simple flag/loop
+    while (AsyncSingleton.isInitializing) {
+      await new Promise(resolve => setTimeout(resolve, 10));
+      if (AsyncSingleton.instance) return AsyncSingleton.instance;
+    }
+
+    AsyncSingleton.isInitializing = true;
+    try {
+      console.log('AsyncSingleton: Starting async initialization...');
+      await new Promise(resolve => setTimeout(resolve, 100)); // Simulate delay
+      AsyncSingleton.instance = new AsyncSingleton();
+    } finally {
+      AsyncSingleton.isInitializing = false;
+    }
+
+    return AsyncSingleton.instance;
+  }
+}
+
+// Example 6: Bypassing Singleton
+// Demonstrates how to bypass the private constructor in JavaScript/TypeScript
+class BypasableSingleton {
+  private static instance: BypasableSingleton;
+  private constructor() {
+    console.log('BypasableSingleton: Instance created');
+  }
+  public static getInstance(): BypasableSingleton {
+    if (!BypasableSingleton.instance) BypasableSingleton.instance = new BypasableSingleton();
+    return BypasableSingleton.instance;
+  }
+}
+
 // Demo code
 function demoSingleton(): void {
   console.log('=== Singleton Pattern Demo ===\n');
@@ -203,7 +248,29 @@ function demoSingleton(): void {
   service2.addData('Item 3');
   
   console.log('Service data:', service2.getData());
-  console.log(`Same instance? ${service1 === service2 ? 'Yes' : 'No'}`);
+  console.log(`Same instance? ${service1 === service2 ? 'Yes' : 'No'}\n`);
+
+  // Example 5: Async Thread-safe Singleton
+  console.log('--- AsyncSingleton Example ---');
+  Promise.all([
+    AsyncSingleton.getInstance(),
+    AsyncSingleton.getInstance(),
+    AsyncSingleton.getInstance()
+  ]).then((instances) => {
+    console.log(`All instances are same: ${instances.every(i => i === instances[0])}`);
+  });
+
+  // Example 6: Bypassing Singleton
+  console.log('--- Bypassing Singleton Example ---');
+  const b1 = BypasableSingleton.getInstance();
+  
+  // Bypassing using Reflect.construct (even if constructor is private)
+  try {
+    const b2 = Reflect.construct(BypasableSingleton, []) as BypasableSingleton;
+    console.log(`Bypass successful! Same instance? ${b1 === b2 ? 'Yes' : 'No'}`);
+  } catch (e) {
+    console.log('Bypass failed:', e);
+  }
 }
 
 // Run the demo

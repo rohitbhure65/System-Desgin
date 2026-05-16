@@ -126,6 +126,55 @@ class ConfigurationManager {
   }
 }
 
+// Example 4: Thread-safe (Synchronized) Singleton
+// In Dart, everything runs in a single-threaded event loop, so basic singletons are inherently thread-safe.
+// However, when dealing with ASYNC initialization, multiple callers might trigger initialization twice.
+class AsyncSingleton {
+  static AsyncSingleton? _instance;
+  static bool _isInitializing = false;
+  
+  AsyncSingleton._internal() {
+    print('AsyncSingleton: Instance created');
+  }
+
+  static Future<AsyncSingleton> getInstance() async {
+    // If instance exists, return it
+    if (_instance != null) return _instance!;
+
+    // If already initializing, wait and check again (serialized access)
+    while (_isInitializing) {
+      await Future.delayed(Duration(milliseconds: 10));
+      if (_instance != null) return _instance!;
+    }
+
+    _isInitializing = true;
+    try {
+      print('AsyncSingleton: Starting heavy async initialization...');
+      await Future.delayed(Duration(milliseconds: 100)); // Simulate delay
+      _instance = AsyncSingleton._internal();
+    } finally {
+      _isInitializing = false;
+    }
+
+    return _instance!;
+  }
+}
+
+// Example 5: Bypassing Singleton
+// Even with a private constructor, Singletons can sometimes be bypassed.
+class BypasableSingleton {
+  static final BypasableSingleton _instance = BypasableSingleton._internal();
+  
+  BypasableSingleton._internal();
+  
+  factory BypasableSingleton() => _instance;
+  
+  // Note: In Dart, reflection via 'dart:mirrors' could bypass this, 
+  // but it's not available in Flutter/Web.
+  // A common bypass is simply creating a different class that mimics it,
+  // or if the private constructor isn't truly protected (e.g. in the same file).
+}
+
 // Demo code
 void main() {
   print('=== Singleton Pattern Demo ===\n');
@@ -161,5 +210,23 @@ void main() {
   config.displayConfig();
   
   var config2 = ConfigurationManager.getInstance();
-  print('Same instance? ${identical(config, config2) ? 'Yes' : 'No'}');
+  print('Same instance? ${identical(config, config2) ? 'Yes' : 'No'}\n');
+
+  // Example 4: Thread-safe (Async) Singleton
+  print('--- AsyncSingleton Example ---');
+  // Simulating multiple concurrent calls
+  Future.wait([
+    AsyncSingleton.getInstance(),
+    AsyncSingleton.getInstance(),
+    AsyncSingleton.getInstance(),
+  ]).then((instances) {
+    print('All instances are same: ${instances.every((i) => identical(i, instances[0]))}');
+  });
+
+  // Example 5: Bypassing Singleton (Conceptual)
+  print('--- Bypassing Singleton (Conceptual) ---');
+  print('In Dart, you can bypass singletons via:');
+  print('1. Reflection (dart:mirrors) - although restricted in many environments');
+  print('2. Multiple Isolates - each isolate has its own memory and its own Singleton instance');
+  print('3. Dependency Injection - if you inject different instances for testing');
 }
