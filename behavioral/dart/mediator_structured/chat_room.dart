@@ -5,7 +5,7 @@ class User extends Colleague {
   
   @override
   void receive(String message) {
-    print('$_name received: $message');
+    print('$name received: $message');
   }
 }
 
@@ -14,7 +14,7 @@ class Bot extends Colleague {
   
   @override
   void receive(String message) {
-    print('$_name received: $message');
+    print('$name received: $message');
     send('Auto-reply: Thanks for your message!');
   }
 }

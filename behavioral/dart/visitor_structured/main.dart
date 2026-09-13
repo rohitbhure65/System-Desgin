@@ -1,7 +1,4 @@
 import 'interfaces.dart';
-import 'shopping_cart.dart';
-import 'file_system.dart';
-import 'employee_salary.dart';
 
 void main() {
   print('=== Visitor Pattern Demo ===\n');

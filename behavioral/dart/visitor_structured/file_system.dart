@@ -1,4 +1,4 @@
-import 'interfaces.dart';
+part of 'interfaces.dart';
 
 class File implements FileSystemNode {
   final String _name;

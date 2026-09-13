@@ -5,7 +5,7 @@ class CPU {
 }
 
 class Memory {
-  void load(int position, String data) { print('Memory: Loading data \\'\$data\\' at position \$position'); }
+  void load(int position, String data) { print("Memory: Loading data '\$data' at position \$position"); }
 }
 
 class HardDrive {
@@ -30,7 +30,7 @@ class Tuner {
 class DVDPlayer {
   void on() => print('DVD Player: ON');
   void off() => print('DVD Player: OFF');
-  void play(String movie) => print('DVD Player: Playing \\'\$movie\\'');
+  void play(String movie) => print("DVD Player: Playing '\$movie'");
 }
 
 class Projector {
@@ -68,11 +68,11 @@ class InventorySystem {
 
 class PaymentSystem {
   bool processPayment(double amount) {
-    print('Payment: Processing payment of \$\amount');
+    print('Payment: Processing payment of \$$amount');
     return true;
   }
   void refundPayment(double amount) {
-    print('Payment: Refunding \$\amount');
+    print('Payment: Refunding \$$amount');
   }
 }
 

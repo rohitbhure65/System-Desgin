@@ -1,4 +1,4 @@
-import 'interfaces.dart';
+part of 'interfaces.dart';
 
 class Manager extends Employee {
   final String _name;

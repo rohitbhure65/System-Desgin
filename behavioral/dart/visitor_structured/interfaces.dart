@@ -1,3 +1,7 @@
+part 'shopping_cart.dart';
+part 'file_system.dart';
+part 'employee_salary.dart';
+
 abstract class Visitor {
   void visitBook(Book book);
   void visitFruit(Fruit fruit);

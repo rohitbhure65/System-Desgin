@@ -1,4 +1,4 @@
-import 'interfaces.dart';
+part of 'interfaces.dart';
 
 class Book extends Item {
   final String _title;

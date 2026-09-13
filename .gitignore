@@ -1,0 +1,20 @@
+# Compiled Java files
+*.class
+*.jar
+*.war
+*.ear
+
+# Compiled C++ files (Windows and Linux)
+*.exe
+*.out
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Optional: macOS/Windows specific system files
+.DS_Store
+Thumbs.db

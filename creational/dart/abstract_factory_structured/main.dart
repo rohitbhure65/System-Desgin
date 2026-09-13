@@ -1,4 +1,3 @@
-import 'interfaces.dart';
 import 'concrete_factories.dart';
 import 'client.dart';
 
